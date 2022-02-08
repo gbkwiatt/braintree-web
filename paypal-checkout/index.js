@@ -7,7 +7,7 @@
 var basicComponentVerification = require('../lib/basic-component-verification');
 var wrapPromise = require('@braintree/wrap-promise');
 var PayPalCheckout = require('./paypal-checkout');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 /**
  * @static

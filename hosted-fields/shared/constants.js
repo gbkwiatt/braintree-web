@@ -2,7 +2,7 @@
 
 var enumerate = require('../../lib/enumerate');
 var errors = require('./errors');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 var constants = {
   VERSION: VERSION,

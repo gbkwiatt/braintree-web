@@ -373,6 +373,8 @@ function allSettled(arr) {
 // Store setTimeout reference so promise-polyfill will be unaffected by
 // other code modifying setTimeout (like sinon.useFakeTimers())
 var setTimeoutFunc = setTimeout;
+// @ts-ignore
+var setImmediateFunc = typeof setImmediate !== 'undefined' ? setImmediate : null;
 
 function isArray(x) {
   return Boolean(x && typeof x.length !== 'undefined');
@@ -606,10 +608,10 @@ Promise.race = function(arr) {
 // Use polyfill for setImmediate for performance gains
 Promise._immediateFn =
   // @ts-ignore
-  (typeof setImmediate === 'function' &&
+  (typeof setImmediateFunc === 'function' &&
     function(fn) {
       // @ts-ignore
-      setImmediate(fn);
+      setImmediateFunc(fn);
     }) ||
   function(fn) {
     setTimeoutFunc(fn, 0);
@@ -686,6 +688,16 @@ function sendAnalyticsEvent(clientInstanceOrPromise, kind, callback) {
       data: addMetadata(configuration, data),
       timeout: constants.ANALYTICS_REQUEST_TIMEOUT_MS
     }, callback);
+  }).catch(function (err) {
+    // for all non-test cases, we don't provide a callback,
+    // so this error will always be swallowed. In this case,
+    // that's fine, it should only error when the deferred
+    // client fails to set up, in which case we don't want
+    // that error to report over and over again via these
+    // deferred analytics events
+    if (callback) {
+      callback(err);
+    }
   });
 }
 
@@ -708,7 +720,7 @@ module.exports = {
 var BraintreeError = _dereq_('./braintree-error');
 var Promise = _dereq_('./promise');
 var sharedErrors = _dereq_('./errors');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 function basicComponentVerification(options) {
   var client, authorization, name;
@@ -838,7 +850,7 @@ module.exports = BraintreeError;
 },{"./enumerate":19}],15:[function(_dereq_,module,exports){
 'use strict';
 
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var PLATFORM = 'web';
 
 var CLIENT_API_URLS = {
@@ -947,7 +959,7 @@ var Promise = _dereq_('./promise');
 var assets = _dereq_('./assets');
 var sharedErrors = _dereq_('./errors');
 
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 function createDeferredClient(options) {
   var promise = Promise.resolve();
@@ -1126,7 +1138,7 @@ module.exports = {
 var wrapPromise = _dereq_('@braintree/wrap-promise');
 var basicComponentVerification = _dereq_('../lib/basic-component-verification');
 var PreferredPaymentMethods = _dereq_('./preferred-payment-methods');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 /**
  * @static

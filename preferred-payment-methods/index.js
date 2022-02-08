@@ -4,7 +4,7 @@
 var wrapPromise = require('@braintree/wrap-promise');
 var basicComponentVerification = require('../lib/basic-component-verification');
 var PreferredPaymentMethods = require('./preferred-payment-methods');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 /**
  * @static

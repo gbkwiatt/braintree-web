@@ -207,6 +207,8 @@ var VenmoDesktop = /** @class */ (function () {
             _this.triggerCompleted({
                 paymentMethodNonce: result.paymentMethodId,
                 username: username,
+                payerInfo: result.payerInfo,
+                id: _this.venmoContextId || "",
             });
         })
             .catch(function (err) {

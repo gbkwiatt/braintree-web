@@ -8,6 +8,7 @@ function isBrowserSupported(options) {
   var isMobileDevice = isAndroid || browserDetection.isIos();
   var isAndroidChrome = isAndroid && browserDetection.isChrome();
   var isMobileDeviceThatSupportsReturnToSameTab = browserDetection.isIosSafari() || isAndroidChrome;
+  var isKnownUnsupportedMobileBrowser = browserDetection.isIosChrome() || browserDetection.isFacebookOwnedBrowserOnAndroid();
 
   options = options || {};
   // NEXT_MAJOR_VERSION allowDesktop will default to true, but can be opted out
@@ -21,23 +22,23 @@ function isBrowserSupported(options) {
   // merchant's app via a webview.
   merchantAllowsWebviews = options.hasOwnProperty('allowWebviews') ? options.allowWebviews : true;
 
+  if (isKnownUnsupportedMobileBrowser) {
+    return false;
+  }
+
   if (!merchantAllowsWebviews && (browserDetection.isAndroidWebview() || browserDetection.isIosWebview())) {
     return false;
   }
 
+  if (!isMobileDevice) {
+    return merchantAllowsDesktopBrowsers;
+  }
+
   if (!merchantAllowsReturningToNewBrowserTab) {
-    if (isMobileDeviceThatSupportsReturnToSameTab) {
-      return true;
-    }
-
-    return merchantAllowsDesktopBrowsers && !isMobileDevice;
+    return isMobileDeviceThatSupportsReturnToSameTab;
   }
 
-  if (!merchantAllowsDesktopBrowsers) {
-    return isMobileDevice;
-  }
-
-  return true;
+  return isMobileDevice;
 }
 
 module.exports = {

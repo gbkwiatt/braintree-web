@@ -54,7 +54,7 @@ var vaultManager = require('./vault-manager');
 var venmo = require('./venmo');
 var visaCheckout = require('./visa-checkout');
 var preferredPaymentMethods = require('./preferred-payment-methods');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 module.exports = {
   /** @type {module:braintree-web/american-express} */

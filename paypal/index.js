@@ -12,7 +12,7 @@ var createAssetsUrl = require('../lib/create-assets-url');
 var BraintreeError = require('../lib/braintree-error');
 var errors = require('./shared/errors');
 var PayPal = require('./external/paypal');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var wrapPromise = require('@braintree/wrap-promise');
 var Promise = require('../lib/promise');
 

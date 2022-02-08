@@ -16,7 +16,7 @@ var events = require('../../shared/events');
 var useMin = require('../../../lib/use-min');
 var BUS_CONFIGURATION_REQUEST_EVENT = require('../../../lib/constants').BUS_CONFIGURATION_REQUEST_EVENT;
 
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var IFRAME_HEIGHT = 400;
 var IFRAME_WIDTH = 400;
 

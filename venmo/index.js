@@ -11,7 +11,7 @@ var BraintreeError = require('../lib/braintree-error');
 var Venmo = require('./venmo');
 var Promise = require('../lib/promise');
 var supportsVenmo = require('./shared/supports-venmo');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 /**
  * @static

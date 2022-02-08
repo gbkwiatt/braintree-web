@@ -8,7 +8,7 @@ var AmericanExpress = require('./american-express');
 var basicComponentVerification = require('../lib/basic-component-verification');
 var createDeferredClient = require('../lib/create-deferred-client');
 var createAssetsUrl = require('../lib/create-assets-url');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var wrapPromise = require('@braintree/wrap-promise');
 
 /**

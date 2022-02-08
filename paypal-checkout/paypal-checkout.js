@@ -17,7 +17,7 @@ var methods = require('../lib/methods');
 var useMin = require('../lib/use-min');
 var convertMethodsToError = require('../lib/convert-methods-to-error');
 var querystring = require('../lib/querystring');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var INTEGRATION_TIMEOUT_MS = require('../lib/constants').INTEGRATION_TIMEOUT_MS;
 
 var REQUIRED_PARAMS_FOR_START_VAULT_INITIATED_CHECKOUT = [
@@ -1082,8 +1082,14 @@ PayPalCheckout.prototype._formatPaymentResourceData = function (options, config)
     }
   }
 
-  if (options.clientMetadataId) {
-    paymentResource.correlationId = options.clientMetadataId;
+  // this needs to be set outside of the block where add it to the
+  // payment request so that a follow up tokenization call can use it,
+  // but if a second create payment resource call is made without
+  // the correlation id, we want to reset it to undefined so that the
+  // tokenization call does not use a stale correlation id
+  this._riskCorrelationId = options.riskCorrelationId;
+  if (options.riskCorrelationId) {
+    paymentResource.correlationId = this._riskCorrelationId;
   }
 
   return paymentResource;
@@ -1094,9 +1100,10 @@ PayPalCheckout.prototype._formatTokenizeData = function (options, params) {
   var gatewayConfiguration = clientConfiguration.gatewayConfiguration;
   var isTokenizationKey = clientConfiguration.authorizationType === 'TOKENIZATION_KEY';
   var isVaultFlow = options.flow === 'vault';
+  var correlationId = this._riskCorrelationId || params.billingToken || params.ecToken;
   var data = {
     paypalAccount: {
-      correlationId: params.billingToken || params.ecToken,
+      correlationId: correlationId,
       options: {
         validate: isVaultFlow && !isTokenizationKey && options.vault
       }

@@ -7,11 +7,14 @@ var CARD_BRAND_MAP = {
   AMERICAN_EXPRESS: 'American Express',
   DINERS: 'Discover',
   DISCOVER: 'Discover',
+  ELO: 'Elo',
+  HIPER: 'Hiper',
+  HIPERCARD: 'Hipercard',
   INTERNATIONAL_MAESTRO: 'Maestro',
   JCB: 'JCB',
   MASTERCARD: 'MasterCard',
   UK_MAESTRO: 'Maestro',
-  UNION_PAY: 'Union Pay',
+  UNION_PAY: 'UnionPay',
   VISA: 'Visa'
   /* eslint-enable camelcase */
 };

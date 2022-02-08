@@ -1,6 +1,6 @@
 {
   "name": "braintree-web",
-  "version": "3.82.0",
+  "version": "3.85.2",
   "license": "MIT",
   "main": "index.js",
   "repository": {
@@ -21,7 +21,7 @@
     "credit-card-type": "9.1.0",
     "framebus": "5.1.2",
     "inject-stylesheet": "5.0.0",
-    "promise-polyfill": "8.2.0",
+    "promise-polyfill": "8.2.1",
     "restricted-input": "3.0.4"
   },
   "browser": {

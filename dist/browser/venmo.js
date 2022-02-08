@@ -1057,6 +1057,8 @@ function allSettled(arr) {
 // Store setTimeout reference so promise-polyfill will be unaffected by
 // other code modifying setTimeout (like sinon.useFakeTimers())
 var setTimeoutFunc = setTimeout;
+// @ts-ignore
+var setImmediateFunc = typeof setImmediate !== 'undefined' ? setImmediate : null;
 
 function isArray(x) {
   return Boolean(x && typeof x.length !== 'undefined');
@@ -1290,10 +1292,10 @@ Promise.race = function(arr) {
 // Use polyfill for setImmediate for performance gains
 Promise._immediateFn =
   // @ts-ignore
-  (typeof setImmediate === 'function' &&
+  (typeof setImmediateFunc === 'function' &&
     function(fn) {
       // @ts-ignore
-      setImmediate(fn);
+      setImmediateFunc(fn);
     }) ||
   function(fn) {
     setTimeoutFunc(fn, 0);
@@ -1370,6 +1372,16 @@ function sendAnalyticsEvent(clientInstanceOrPromise, kind, callback) {
       data: addMetadata(configuration, data),
       timeout: constants.ANALYTICS_REQUEST_TIMEOUT_MS
     }, callback);
+  }).catch(function (err) {
+    // for all non-test cases, we don't provide a callback,
+    // so this error will always be swallowed. In this case,
+    // that's fine, it should only error when the deferred
+    // client fails to set up, in which case we don't want
+    // that error to report over and over again via these
+    // deferred analytics events
+    if (callback) {
+      callback(err);
+    }
   });
 }
 
@@ -1392,7 +1404,7 @@ module.exports = {
 var BraintreeError = _dereq_('./braintree-error');
 var Promise = _dereq_('./promise');
 var sharedErrors = _dereq_('./errors');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 function basicComponentVerification(options) {
   var client, authorization, name;
@@ -1522,7 +1534,7 @@ module.exports = BraintreeError;
 },{"./enumerate":56}],51:[function(_dereq_,module,exports){
 'use strict';
 
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var PLATFORM = 'web';
 
 var CLIENT_API_URLS = {
@@ -1649,7 +1661,7 @@ var Promise = _dereq_('./promise');
 var assets = _dereq_('./assets');
 var sharedErrors = _dereq_('./errors');
 
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 function createDeferredClient(options) {
   var promise = Promise.resolve();
@@ -1997,7 +2009,7 @@ exports.CREATE_PAYMENT_CONTEXT_QUERY = "mutation CreateVenmoPaymentContext($inpu
 exports.LEGACY_UPDATE_PAYMENT_CONTEXT_QUERY = "mutation UpdateVenmoQRCodePaymentContext($input: UpdateVenmoQRCodePaymentContextInput!) {\n  updateVenmoQRCodePaymentContext(input: $input) {\n    clientMutationId\n  }\n}";
 exports.UPDATE_PAYMENT_CONTEXT_QUERY = "mutation UpdateVenmoPaymentContextStatus($input: UpdateVenmoPaymentContextStatusInput!) {\n  updateVenmoPaymentContextStatus(input: $input) {\n    clientMutationId\n  }\n}";
 exports.LEGACY_VENMO_PAYMENT_CONTEXT_STATUS_QUERY = "query PaymentContext($id: ID!) {\n  node(id: $id) {\n    ... on VenmoQRCodePaymentContext {\n      status\n      paymentMethodId\n      userName\n    }\n  }\n}";
-exports.VENMO_PAYMENT_CONTEXT_STATUS_QUERY = "query PaymentContext($id: ID!) {\n  node(id: $id) {\n    ... on VenmoPaymentContext {\n      status\n      paymentMethodId\n      userName\n    }\n  }\n}";
+exports.VENMO_PAYMENT_CONTEXT_STATUS_QUERY = "query PaymentContext($id: ID!) {\n  node(id: $id) {\n    ... on VenmoPaymentContext {\n      status\n      paymentMethodId\n      userName\n      payerInfo {\n        firstName\n        lastName\n        phoneNumber\n        email\n        externalId\n        userName\n      }\n    }\n  }\n}";
 
 },{}],67:[function(_dereq_,module,exports){
 "use strict";
@@ -2209,6 +2221,8 @@ var VenmoDesktop = /** @class */ (function () {
             _this.triggerCompleted({
                 paymentMethodNonce: result.paymentMethodId,
                 username: username,
+                payerInfo: result.payerInfo,
+                id: _this.venmoContextId || "",
             });
         })
             .catch(function (err) {
@@ -2387,7 +2401,7 @@ var BraintreeError = _dereq_('../lib/braintree-error');
 var Venmo = _dereq_('./venmo');
 var Promise = _dereq_('../lib/promise');
 var supportsVenmo = _dereq_('./shared/supports-venmo');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 
 /**
  * @static
@@ -2539,13 +2553,40 @@ function doesNotSupportWindowOpenInIos() {
   return isIosWebview() || !isIosSafari();
 }
 
+function isFacebookOwnedBrowserOnAndroid() {
+  var ua = window.navigator.userAgent.toLowerCase();
+
+  // Huawei's Facebook useragent does not include Android
+  if (ua.indexOf('huawei') > -1 && ua.indexOf('fban') > -1) {
+    return true;
+  }
+
+  if (!isAndroid()) {
+    return false;
+  }
+
+  return ua.indexOf('fb_iab') > -1 || ua.indexOf('instagram') > -1;
+}
+
+// iOS chrome used to work with Venmo, but now it does not
+// we are unsure if something changed in the iOS Chrome app
+// itself, or if something about iOS webviews has changed
+// until we find out more info, we've created a helper to
+// easilly turn off iOS Chrome as a supported browser in
+// the isBrowserSupported helper function
+function isIosChrome() {
+  return isIos() && isChrome();
+}
+
 module.exports = {
   isAndroid: isAndroid,
   isAndroidWebview: isAndroidWebview,
   isChrome: isChrome,
   isIos: isIos,
+  isIosChrome: isIosChrome,
   isIosSafari: isIosSafari,
   isIosWebview: isIosWebview,
+  isFacebookOwnedBrowserOnAndroid: isFacebookOwnedBrowserOnAndroid,
   doesNotSupportWindowOpenInIos: doesNotSupportWindowOpenInIos
 };
 
@@ -2705,6 +2746,7 @@ function isBrowserSupported(options) {
   var isMobileDevice = isAndroid || browserDetection.isIos();
   var isAndroidChrome = isAndroid && browserDetection.isChrome();
   var isMobileDeviceThatSupportsReturnToSameTab = browserDetection.isIosSafari() || isAndroidChrome;
+  var isKnownUnsupportedMobileBrowser = browserDetection.isIosChrome() || browserDetection.isFacebookOwnedBrowserOnAndroid();
 
   options = options || {};
   // NEXT_MAJOR_VERSION allowDesktop will default to true, but can be opted out
@@ -2718,23 +2760,23 @@ function isBrowserSupported(options) {
   // merchant's app via a webview.
   merchantAllowsWebviews = options.hasOwnProperty('allowWebviews') ? options.allowWebviews : true;
 
+  if (isKnownUnsupportedMobileBrowser) {
+    return false;
+  }
+
   if (!merchantAllowsWebviews && (browserDetection.isAndroidWebview() || browserDetection.isIosWebview())) {
     return false;
   }
 
+  if (!isMobileDevice) {
+    return merchantAllowsDesktopBrowsers;
+  }
+
   if (!merchantAllowsReturningToNewBrowserTab) {
-    if (isMobileDeviceThatSupportsReturnToSameTab) {
-      return true;
-    }
-
-    return merchantAllowsDesktopBrowsers && !isMobileDevice;
+    return isMobileDeviceThatSupportsReturnToSameTab;
   }
 
-  if (!merchantAllowsDesktopBrowsers) {
-    return isMobileDevice;
-  }
-
-  return true;
+  return isMobileDevice;
 }
 
 module.exports = {
@@ -2765,7 +2807,7 @@ var ExtendedPromise = _dereq_('@braintree/extended-promise');
 var createVenmoDesktop = _dereq_('./external/');
 var graphqlQueries = _dereq_('./external/queries');
 
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var DEFAULT_MOBILE_POLLING_INTERVAL = 250; // 1/4 second
 var DEFAULT_MOBILE_EXPIRING_THRESHOLD = 300000; // 5 minutes
 
@@ -2775,7 +2817,8 @@ var DEFAULT_MOBILE_EXPIRING_THRESHOLD = 300000; // 5 minutes
  * @property {string} nonce The payment method nonce.
  * @property {string} type The payment method type, always `VenmoAccount`.
  * @property {object} details Additional Venmo account details.
- * @property {string} details.username Username of the Venmo account.
+ * @property {string} details.username The username of the Venmo account.
+ * @property {string} details.paymentContextId The context ID of the Venmo payment. Only available when used with {@link https://braintree.github.io/braintree-web/current/module-braintree-web_venmo.html#.create|`paymentMethodUsage`}.
  */
 
 /**
@@ -3324,7 +3367,9 @@ Venmo.prototype._tokenizeForMobileWithManualReturn = function () {
 
     self._tokenizePromise.resolve({
       paymentMethodNonce: payload.paymentMethodId,
-      username: payload.userName
+      username: payload.userName,
+      payerInfo: payload.payerInfo,
+      id: self._venmoPaymentContextId
     });
   }).catch(function (err) {
     analytics.sendEvent(self._createPromise, 'venmo.tokenize.manual-return.failure');
@@ -3563,7 +3608,9 @@ Venmo.prototype.processResultsFromHash = function (hash) {
           }
           resolve({
             paymentMethodNonce: result.paymentMethodId,
-            username: result.userName
+            username: result.userName,
+            payerInfo: result.payerInfo,
+            id: params.resource_id
           });
         }).catch(function () {
           analytics.sendEvent(self._createPromise, 'venmo.process-results.payment-context-status-query-failed');
@@ -3626,16 +3673,30 @@ function getFragmentParameters(hash) {
   }, {});
 }
 
+function formatUserName(username) {
+  username = username || '';
+
+  // NEXT_MAJOR_VERSION the web sdks have a prepended @ sign
+  // but the ios and android ones do not. This should be standardized
+  return '@' + username.replace('@', '');
+}
+
 function formatTokenizePayload(payload) {
-  return {
+  var formattedPayload = {
     nonce: payload.paymentMethodNonce,
     type: 'VenmoAccount',
     details: {
-      // NEXT_MAJOR_VERSION the web sdks have a prepended @ sign
-      // but the ios and android ones do not. This should be standardized
-      username: '@' + (payload.username || '').replace('@', '')
+      username: formatUserName(payload.username),
+      paymentContextId: payload.id
     }
   };
+
+  if (payload.payerInfo) {
+    formattedPayload.details.payerInfo = payload.payerInfo;
+    formattedPayload.details.payerInfo.userName = formatUserName(payload.payerInfo.userName);
+  }
+
+  return formattedPayload;
 }
 
 // From https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API

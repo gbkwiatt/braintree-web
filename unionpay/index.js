@@ -11,7 +11,7 @@ var createDeferredClient = require('../lib/create-deferred-client');
 var createAssetsUrl = require('../lib/create-assets-url');
 var analytics = require('../lib/analytics');
 var errors = require('./shared/errors');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var Promise = require('../lib/promise');
 var wrapPromise = require('@braintree/wrap-promise');
 

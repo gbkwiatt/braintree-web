@@ -10,7 +10,7 @@ var createDeferredClient = require('../lib/create-deferred-client');
 var createAssetsUrl = require('../lib/create-assets-url');
 var errors = require('./errors');
 var USBankAccount = require('./us-bank-account');
-var VERSION = "3.82.0";
+var VERSION = "3.85.2";
 var Promise = require('../lib/promise');
 var wrapPromise = require('@braintree/wrap-promise');
 
